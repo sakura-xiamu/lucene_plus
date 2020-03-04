@@ -1,9 +1,9 @@
 package com.baiwazi.lucene.gateway.impl;
 
-import com.common.framework.lang.StringUtils;
-import com.common.lucene.base.IKAnalyzer4Lucene7;
-import com.common.lucene.gateway.LuceneGateway;
+import cn.hutool.core.util.StrUtil;
+import com.baiwazi.lucene.gateway.LuceneGateway;
 import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.analysis.cn.smart.SmartChineseAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.*;
 import org.apache.lucene.search.IndexSearcher;
@@ -36,7 +36,9 @@ public abstract class DefaultLuceneGateway implements LuceneGateway {
     private IndexReader indexReader;
 
     // 请在本方法给我索引路径，不传使用默认路径
-    protected abstract String addIndexDir();
+    public abstract String addIndexDir();
+
+    public abstract Analyzer addAnalyzer();
 
     @Override
     public int insert(List<Document> documents) throws IOException {
@@ -118,9 +120,12 @@ public abstract class DefaultLuceneGateway implements LuceneGateway {
     }
 
     private void init() throws IOException {
-        analyzer = new IKAnalyzer4Lucene7(true);
+        analyzer = this.addAnalyzer();
+        if (analyzer == null) {
+            analyzer = new SmartChineseAnalyzer();
+        }
         String indexDir = this.addIndexDir();
-        if (StringUtils.isBlank(indexDir)) {
+        if (StrUtil.isBlank(indexDir)) {
             indexDir = INDEX_PATH;
         }
         directory = FSDirectory.open((new File(indexDir)).toPath());
